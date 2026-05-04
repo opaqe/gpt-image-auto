@@ -1,0 +1,14 @@
+# 개발 내부 파일
+.kkirikkiri/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 에디터
+.vscode/
+.idea/
+
+# 임시 파일
+*.zip
+*.log

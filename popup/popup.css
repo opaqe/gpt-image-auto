@@ -1,0 +1,698 @@
+:root {
+  --bg: #FFFFFF;
+  --paper: #F9F9F8;
+  --surface: #F6F5F4;
+  --border: #DFDCD9;
+  --muted: #A39E98;
+  --text-sec: #78736F;
+  --text: #31302E;
+  --ink: #191918;
+  --accent: #097FE8;
+  --accent-hover: #0066CC;
+  --success-bg: #F0FFF4;
+  --success-border: #1AAE39;
+  --danger: #F64932;
+  --danger-hover: #D93B27;
+  --shadow-1: 0px 3px 9px #00000008, 0px 0.7px 1.4625px rgba(0,0,0,.015);
+  --shadow-2: 0px 4px 18px #0000000a, 0px 2.025px 7.84688px rgba(0,0,0,.027), 0px 0.8px 2.925px #00000005;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 400px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.container {
+  padding: 20px;
+}
+
+/* 헤더: 타이틀 영역 + Threads 아이콘을 좌우로 배치 */
+.popup-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+h1 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 3px;
+  letter-spacing: -0.015625em;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+/* Threads 링크 아이콘 버튼 */
+.btn-threads {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: opacity 0.15s, transform 0.12s;
+  margin-top: 2px;
+  opacity: 0.65;
+}
+
+.btn-threads img {
+  display: block;
+  border-radius: 7px;
+}
+
+.btn-threads:hover {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+/* 전역 참고 양식 이미지 */
+.global-ref-section {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.global-ref-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-sec);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.global-ref-slot {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+}
+
+.global-ref-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-global-ref {
+  padding: 5px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-sec);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-global-ref:hover {
+  background: var(--bg);
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.global-ref-hint {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.global-ref-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.global-ref-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.global-ref-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.global-ref-info-text {
+  font-size: 11px;
+  color: var(--text-sec);
+  line-height: 1.4;
+}
+
+.btn-global-ref-remove {
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid #FFCCCC;
+  border-radius: 5px;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  align-self: flex-start;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-global-ref-remove:hover {
+  background: var(--danger);
+  color: #FFFFFF;
+  border-color: var(--danger);
+}
+
+/* 전역 스타일 지침 */
+.global-prompt-section {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.global-prompt-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-sec);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.global-prompt-input {
+  width: 100%;
+  padding: 6px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  resize: none;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+}
+
+.global-prompt-input:focus {
+  outline: none;
+  border-bottom-color: var(--accent);
+}
+
+.global-prompt-input::placeholder {
+  color: var(--muted);
+}
+
+/* 모드 선택 행 */
+.mode-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mode-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-sec);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.mode-seg {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 2px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.mode-btn {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-sec);
+  background: transparent;
+  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+  white-space: nowrap;
+}
+
+.mode-btn.active {
+  background: var(--bg);
+  color: var(--ink);
+  box-shadow: var(--shadow-1);
+}
+
+.mode-btn:not(.active):hover {
+  color: var(--text);
+}
+
+.mode-hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* 전체 선택/해제 행 */
+.select-all-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* MD 가져오기 버튼 */
+.btn-import-md {
+  padding: 4px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-sec);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-import-md:hover:not(:disabled) {
+  background: var(--paper);
+  color: var(--ink);
+  border-color: var(--accent);
+}
+
+.btn-import-md:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* 전체 삭제 버튼 — select-all-row 우측 정렬 */
+.btn-clear-all {
+  margin-left: auto;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid #FFCCCC;
+  border-radius: 6px;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-clear-all:hover {
+  background: var(--danger);
+  color: #FFFFFF;
+  border-color: var(--danger);
+}
+
+.btn-select-all {
+  padding: 4px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-sec);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-select-all:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.select-count {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* 프롬프트 목록 */
+.prompt-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+  transition: border-top 0.1s;
+}
+
+.prompt-number {
+  flex-shrink: 0;
+  width: 20px;
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.prompt-input {
+  flex: 1;
+  min-height: 32px;
+  max-height: 80px;
+  padding: 6px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.prompt-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(9,127,232,.12);
+}
+
+.prompt-input::placeholder {
+  color: var(--muted);
+}
+
+.prompt-input.active {
+  border-color: var(--accent);
+  background: #F0F7FF;
+  box-shadow: 0 0 0 2px rgba(9,127,232,.12);
+}
+
+.prompt-input.done {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--text-sec);
+}
+
+.prompt-input.error {
+  border-color: var(--danger);
+  background: #FFF5F5;
+}
+
+/* 체크박스 */
+.prompt-checkbox {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  margin-top: 9px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.prompt-row:has(.prompt-checkbox:not(:checked)) .prompt-input {
+  opacity: 0.4;
+}
+
+/* 드래그 핸들 */
+.drag-handle {
+  flex-shrink: 0;
+  width: 16px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: var(--border);
+  font-size: 12px;
+  line-height: 1;
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.prompt-row.dragging {
+  opacity: 0.4;
+}
+
+.prompt-row.drag-over {
+  border-top: 2px solid var(--accent);
+  padding-top: 2px;
+}
+
+/* 이미지 첨부 버튼 */
+.btn-attach {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  margin-top: 3px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.btn-attach:hover:not(:disabled) {
+  background: var(--paper);
+  border-color: var(--accent);
+}
+
+.btn-attach:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* 이미지 첨부 썸네일 래퍼 — 최대 3개 가로 나열 */
+.attach-thumb-wrap {
+  display: flex; /* JS로 'flex'/'none' 토글 */
+  flex-shrink: 0;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: nowrap;
+  margin-top: 1px;
+}
+
+/* 썸네일 1개 단위 컨테이너 (이미지 + 제거 버튼) */
+.attach-thumb-item {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.attach-thumb {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  display: block;
+}
+
+.btn-attach-remove {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #FFFFFF;
+  font-size: 9px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  font-family: inherit;
+}
+
+.btn-attach-remove:hover {
+  background: var(--danger-hover);
+}
+
+/* 이미지 최대 3장 초과 시 토스트 알림 */
+.attach-toast {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: var(--ink);
+  color: #FFFFFF;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 9999;
+}
+
+.attach-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* 재시도 버튼 */
+.btn-retry {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--danger);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.btn-retry:hover {
+  background: var(--danger);
+  color: #FFFFFF;
+}
+
+/* 버튼 */
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.btn {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--text);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #FFFFFF;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger-hover);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--paper);
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: #FFFFFF;
+  border: none;
+}
+
+.btn-accent:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+/* 진행 상태 */
+#progress-section {
+  margin-top: 14px;
+}
+
+.progress-bar-container {
+  height: 4px;
+  background: var(--surface);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: var(--text-sec);
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* 에러 */
+.error-text {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 8px;
+  text-align: center;
+  padding: 8px 12px;
+  background: #FFF5F5;
+  border: 1px solid #FFD0CC;
+  border-radius: 6px;
+}

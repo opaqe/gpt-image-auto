@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="popup-header">
+      <div>
+        <h1>GPT 이미지 자동 생성기</h1>
+        <p class="subtitle">프롬프트를 선택하고 실행하면 ChatGPT에서 순차적으로 이미지를 생성합니다</p>
+      </div>
+      <a id="threads-link" href="#" title="@kkongdon_story on Threads" class="btn-threads">
+        <img src="../icons/threads-icon.png" width="28" height="28" alt="Threads" draggable="false">
+      </a>
+    </div>
+
+    <div class="global-ref-section">
+      <span class="global-ref-label">전역 참고 양식 이미지</span>
+      <div class="global-ref-slot">
+        <div id="global-ref-empty" class="global-ref-empty">
+          <button id="btn-global-ref" class="btn-global-ref">📎 이미지 등록</button>
+          <span class="global-ref-hint">등록 시 모든 카드에 자동 첨부 (카드당 슬롯 2장으로 감소)</span>
+        </div>
+        <div id="global-ref-preview" class="global-ref-preview" style="display:none;">
+          <img id="global-ref-thumb" class="global-ref-thumb" alt="전역 참고 이미지">
+          <div class="global-ref-info">
+            <span class="global-ref-info-text">전역 이미지 등록됨 — 모든 카드에 자동 첨부</span>
+            <button id="btn-global-ref-remove" class="btn-global-ref-remove">✕ 제거</button>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="global-ref-input" accept="image/*" style="display:none;">
+    </div>
+
+    <div class="global-prompt-section">
+      <label class="global-prompt-label" for="global-prompt">전역 스타일 지침</label>
+      <textarea id="global-prompt" class="global-prompt-input" placeholder="모든 프롬프트에 공통 적용할 스타일 (예: flat design, pastel colors, 16:9)" rows="2"></textarea>
+    </div>
+
+    <div class="mode-row">
+      <span class="mode-label">모드</span>
+      <div class="mode-seg" id="mode-seg">
+        <button class="mode-btn active" data-mode="instant">⚡ Instant</button>
+        <button class="mode-btn" data-mode="thinking">💭 Thinking</button>
+        <button class="mode-btn" data-mode="pro">🔥 Pro</button>
+      </div>
+      <span class="mode-hint" id="mode-hint">90초 대기</span>
+    </div>
+
+    <div class="select-all-row">
+      <button id="btn-select-all" class="btn-select-all">전체 선택/해제</button>
+      <span id="select-count" class="select-count">10개 선택됨</span>
+      <button id="btn-import-md" class="btn-import-md" title="MD 파일에서 프롬프트 자동 불러오기">📄 MD</button>
+      <input type="file" id="md-file-input" accept=".md,.txt" style="display:none;">
+      <button id="btn-clear-all" class="btn-clear-all">전체 삭제</button>
+    </div>
+
+    <div id="prompts-container">
+      <!-- JS로 10개 생성 -->
+    </div>
+
+    <div class="controls">
+      <button id="btn-run" class="btn btn-primary">실행</button>
+      <button id="btn-stop" class="btn btn-danger" style="display:none;">중지</button>
+      <button id="btn-download" class="btn btn-secondary" style="display:none;">전체 다운로드</button>
+      <button id="btn-download-run" class="btn btn-accent" style="display:none;">이번 실행분 다운로드</button>
+    </div>
+
+    <div id="progress-section" style="display:none;">
+      <div class="progress-bar-container">
+        <div id="progress-bar" class="progress-bar"></div>
+      </div>
+      <p id="progress-text" class="progress-text">대기중</p>
+    </div>
+
+    <div id="error-section" style="display:none;">
+      <p id="error-text" class="error-text"></p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
