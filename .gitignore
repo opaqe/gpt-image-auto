@@ -1,5 +1,6 @@
 # 개발 내부 파일
 .kkirikkiri/
+PRD/
 
 # OS
 .DS_Store
