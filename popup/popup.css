@@ -235,6 +235,100 @@ h1 {
   color: var(--muted);
 }
 
+/* 스타일 + 글꼴 드롭다운 행 */
+.preset-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.preset-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.preset-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-sec);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.preset-select {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: auto;
+  transition: border-color 0.15s;
+}
+
+.preset-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* 이미지 비율 선택 그룹 */
+.ratio-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ratio-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-sec);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+#ratio-btns {
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.ratio-btn {
+  padding: 4px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-sec);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.ratio-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--bg);
+}
+
+.ratio-btn.active {
+  background: rgba(9, 127, 232, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* 모드 선택 행 */
 .mode-row {
   display: flex;
@@ -656,6 +750,19 @@ h1 {
 
 .btn-accent:hover:not(:disabled) {
   background: var(--accent-hover);
+}
+
+/* 초기화 버튼 — 중립 아웃라인 스타일 */
+.btn-reset {
+  background: transparent;
+  color: var(--text-sec);
+  border: 1px solid var(--border);
+}
+
+.btn-reset:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--muted);
 }
 
 /* 진행 상태 */

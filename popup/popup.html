@@ -39,6 +39,51 @@
       <textarea id="global-prompt" class="global-prompt-input" placeholder="모든 프롬프트에 공통 적용할 스타일 (예: flat design, pastel colors, 16:9)" rows="2"></textarea>
     </div>
 
+    <div class="preset-row">
+      <div class="preset-field">
+        <label class="preset-label" for="style-select">스타일</label>
+        <select id="style-select" class="preset-select">
+          <option value="">— 없음</option>
+          <option value="minimal">미니멀</option>
+          <option value="modern">모던</option>
+          <option value="flat">플랫 디자인</option>
+          <option value="illust">일러스트</option>
+          <option value="retro">레트로</option>
+          <option value="popart">팝아트</option>
+          <option value="isometric">이소메트릭</option>
+          <option value="infographic">인포그래픽</option>
+          <option value="duotone">듀오톤</option>
+          <option value="lineart">라인아트</option>
+        </select>
+      </div>
+      <div class="preset-field">
+        <label class="preset-label" for="font-select">글꼴</label>
+        <select id="font-select" class="preset-select">
+          <option value="">— 없음</option>
+          <option value="gothic">고딕 (산세리프)</option>
+          <option value="myeongjo">명조 (세리프)</option>
+          <option value="handwriting">손글씨</option>
+          <option value="retrogothic">레트로 고딕</option>
+          <option value="calligraphy">캘리그라피</option>
+          <option value="neon">네온 사인</option>
+          <option value="stencil">스텐실</option>
+          <option value="display">디스플레이</option>
+          <option value="block">블록 폰트</option>
+          <option value="brush">붓글씨 서예</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ratio-group">
+      <span class="ratio-label">이미지 비율</span>
+      <div id="ratio-btns">
+        <button class="ratio-btn" data-ratio="landscape">가로형 16:9</button>
+        <button class="ratio-btn" data-ratio="square">정방형 1:1</button>
+        <button class="ratio-btn" data-ratio="portrait">세로형 9:16</button>
+        <button class="ratio-btn" data-ratio="cardnews">카드뉴스 4:5</button>
+      </div>
+    </div>
+
     <div class="mode-row">
       <span class="mode-label">모드</span>
       <div class="mode-seg" id="mode-seg">
@@ -64,6 +109,7 @@
     <div class="controls">
       <button id="btn-run" class="btn btn-primary">실행</button>
       <button id="btn-stop" class="btn btn-danger" style="display:none;">중지</button>
+      <button id="btn-reset" class="btn btn-reset" style="display:none;" title="작업을 정지하고 초기 화면으로 돌아갑니다">🔄 초기화</button>
       <button id="btn-download" class="btn btn-secondary" style="display:none;">전체 다운로드</button>
       <button id="btn-download-run" class="btn btn-accent" style="display:none;">이번 실행분 다운로드</button>
     </div>

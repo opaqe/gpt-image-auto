@@ -3,6 +3,9 @@ const STORAGE_KEY = 'gpt-image-auto-prompts';
 const GLOBAL_PROMPT_KEY = 'gpt-image-auto-global-prompt';
 const GLOBAL_REF_KEY = 'gpt-image-auto-global-ref';
 const MODE_KEY = 'gpt-image-auto-mode';
+const SIZE_RATIO_KEY = 'gpt-auto-size-ratio';
+const STYLE_PRESET_KEY = 'gpt-auto-style-preset';
+const FONT_PRESET_KEY  = 'gpt-auto-font-preset';
 
 const MODE_HINTS = {
   instant:  '90초 대기',
@@ -14,6 +17,7 @@ const globalPromptInput = document.getElementById('global-prompt');
 const promptsContainer = document.getElementById('prompts-container');
 const btnRun = document.getElementById('btn-run');
 const btnStop = document.getElementById('btn-stop');
+const btnReset = document.getElementById('btn-reset');
 const btnDownload = document.getElementById('btn-download');
 const btnDownloadRun = document.getElementById('btn-download-run');
 const btnSelectAll = document.getElementById('btn-select-all');
@@ -130,6 +134,56 @@ setMode(selectedMode); // 저장된 모드 복원
 
 modeBtns.forEach(btn => {
   btn.addEventListener('click', () => setMode(btn.dataset.mode));
+});
+// ─────────────────────────────────────────────────
+
+// ── 이미지 비율 선택 (v2.2) ──────────────────────
+let selectedRatio = localStorage.getItem(SIZE_RATIO_KEY) || null;
+
+const ratioBtns = document.querySelectorAll('.ratio-btn');
+
+function setRatio(ratio) {
+  // 같은 버튼 재클릭 → none (비활성)으로 토글
+  selectedRatio = (selectedRatio === ratio) ? null : ratio;
+  if (selectedRatio) {
+    localStorage.setItem(SIZE_RATIO_KEY, selectedRatio);
+  } else {
+    localStorage.removeItem(SIZE_RATIO_KEY);
+  }
+  ratioBtns.forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.ratio === selectedRatio)
+  );
+}
+
+// 저장된 비율 복원
+ratioBtns.forEach(btn => {
+  btn.classList.toggle('active', btn.dataset.ratio === selectedRatio);
+  btn.addEventListener('click', () => setRatio(btn.dataset.ratio));
+});
+// ─────────────────────────────────────────────────
+
+// ── 스타일 + 글꼴 선택 (v2.2) ────────────────────
+const styleSelect = document.getElementById('style-select');
+const fontSelect  = document.getElementById('font-select');
+
+// 저장된 값 복원
+styleSelect.value = localStorage.getItem(STYLE_PRESET_KEY) || '';
+fontSelect.value  = localStorage.getItem(FONT_PRESET_KEY)  || '';
+
+styleSelect.addEventListener('change', () => {
+  if (styleSelect.value) {
+    localStorage.setItem(STYLE_PRESET_KEY, styleSelect.value);
+  } else {
+    localStorage.removeItem(STYLE_PRESET_KEY);
+  }
+});
+
+fontSelect.addEventListener('change', () => {
+  if (fontSelect.value) {
+    localStorage.setItem(FONT_PRESET_KEY, fontSelect.value);
+  } else {
+    localStorage.removeItem(FONT_PRESET_KEY);
+  }
 });
 // ─────────────────────────────────────────────────
 
@@ -290,6 +344,9 @@ btnClearAll.addEventListener('click', () => {
     input.classList.remove('active', 'done', 'error');
   });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(Array(PROMPT_COUNT).fill('')));
+  globalPromptInput.value = '';
+  localStorage.removeItem(GLOBAL_PROMPT_KEY);
+  updateSelectCount();
 });
 
 function setupDragEvents(row, idx) {
@@ -394,6 +451,9 @@ btnRun.addEventListener('click', () => {
       globalPrompt,
       images,
       waitMode: selectedMode,
+      sizeRatio:    selectedRatio,            // v2.2: 비율 선택값
+      stylePreset:  styleSelect.value || null, // v2.2: 스타일 선택값
+      fontPreset:   fontSelect.value  || null, // v2.2: 글꼴 선택값
       tabId
     }, (response) => {
       if (chrome.runtime.lastError) {
@@ -431,6 +491,11 @@ btnDownloadRun.addEventListener('click', () => {
 
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.type === 'PROGRESS_UPDATE') {
+    // v2.2: 팝업이 초기 상태인 채로 PROGRESS_UPDATE를 받은 경우 (SW 재시작 후 GET_STATUS race)
+    // 진행 UI로 자동 전환 — 이미 running UI이면 setRunningUI는 아무 부작용 없음
+    if (btnRun.style.display !== 'none') {
+      setRunningUI(true);
+    }
     updateProgress(msg.current, msg.total, msg.status);
     highlightPrompt(msg.currentIndex, msg.status);
 
@@ -440,15 +505,7 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 
   if (msg.type === 'ALL_COMPLETE') {
-    setRunningUI(false);
-    updateProgress(msg.total, msg.total,
-      `완료! (성공: ${msg.successCount}, 실패: ${msg.errorCount})`);
-
-    if (msg.successCount > 0) {
-      btnDownload.style.display = 'block';
-      btnDownloadRun.style.display = 'block';
-    }
-
+    showCompleteView(msg.successCount, msg.errorCount, msg.total);
     showRetryButtons();
   }
 
@@ -466,28 +523,23 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 });
 
+// 팝업 열릴 때 백그라운드 상태 확인 → 화면 복원 (팝업 상태 유지 v2.2)
 chrome.runtime.sendMessage({ type: 'GET_STATUS' }, (response) => {
   if (chrome.runtime.lastError || !response) return;
   if (response.running) {
     setRunningUI(true);
     updateProgress(response.current, response.total, response.status);
   } else if (response.lastRunComplete) {
-    // 팝업이 닫혔다가 다시 열렸을 때 완료 상태 복원
-    progressSection.style.display = 'block';
-    updateProgress(
-      response.total, response.total,
-      `완료! (성공: ${response.successCount}, 실패: ${response.errorCount})`
-    );
-    if (response.successCount > 0) {
-      btnDownload.style.display = 'block';
-      btnDownloadRun.style.display = 'block';
-    }
+    // 팝업이 닫혔다가 재열기 → 완료 화면 복원
+    showCompleteView(response.successCount, response.errorCount, response.total);
   }
 });
 
 function setRunningUI(running) {
   btnRun.style.display = running ? 'none' : 'block';
   btnStop.style.display = running ? 'block' : 'none';
+  // v2.2: 실행 중에만 초기화 버튼 표시 (완료 시엔 showCompleteView가 별도 처리)
+  btnReset.style.display = running ? 'block' : 'none';
   progressSection.style.display = 'block';
   inputs.forEach(input => input.disabled = running);
   checkboxes.forEach(cb => cb.disabled = running);
@@ -504,6 +556,64 @@ function setRunningUI(running) {
     btnDownloadRun.style.display = 'none';
   }
 }
+
+// v2.2: 완료 화면 — 실행 버튼 없이 [다운로드] + [초기화]만 표시
+function showCompleteView(successCount, errorCount, total) {
+  btnRun.style.display = 'none';
+  btnStop.style.display = 'none';
+  btnReset.style.display = 'block';
+  progressSection.style.display = 'block';
+  updateProgress(total, total, `완료! (성공: ${successCount}, 실패: ${errorCount})`);
+
+  if (successCount > 0) {
+    btnDownload.style.display = 'block';
+    btnDownloadRun.style.display = 'block';
+  }
+
+  // 입력 요소 재활성화 (스크롤 확인은 가능하게)
+  inputs.forEach(input => input.disabled = false);
+  checkboxes.forEach(cb => cb.disabled = false);
+  btnSelectAll.disabled = false;
+  btnImportMd.disabled = false;
+  document.querySelectorAll('.btn-attach').forEach(btn => btn.disabled = false);
+  btnGlobalRef.disabled = false;
+  if (btnGlobalRefRemove) btnGlobalRefRemove.disabled = false;
+  updateAttachLimits();
+}
+
+// v2.2: 초기 화면 복귀 — 모든 상태를 처음 열었을 때로 리셋
+function showInitialView() {
+  btnRun.style.display = 'block';
+  btnStop.style.display = 'none';
+  btnReset.style.display = 'none';
+  btnDownload.style.display = 'none';
+  btnDownloadRun.style.display = 'none';
+  progressSection.style.display = 'none';
+  progressBar.style.width = '0%';
+  progressText.textContent = '대기중';
+
+  inputs.forEach(input => {
+    input.disabled = false;
+    input.classList.remove('active', 'done', 'error');
+  });
+  checkboxes.forEach(cb => cb.disabled = false);
+  btnSelectAll.disabled = false;
+  btnImportMd.disabled = false;
+  document.querySelectorAll('.btn-attach').forEach(btn => btn.disabled = false);
+  btnGlobalRef.disabled = false;
+  if (btnGlobalRefRemove) btnGlobalRefRemove.disabled = false;
+
+  removeRetryButtons();
+  hideError();
+  updateAttachLimits();
+}
+
+// v2.2: 초기화 버튼 핸들러
+btnReset.addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: 'STOP_GENERATION' });   // 실행 중이면 정지
+  chrome.runtime.sendMessage({ type: 'RESET_STATE' });        // lastRunComplete 클리어
+  showInitialView();
+});
 
 function updateProgress(current, total, status) {
   const pct = total > 0 ? (current / total) * 100 : 0;

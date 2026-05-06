@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "GPT 이미지 자동 생성기",
   "description": "ChatGPT에서 여러 이미지 프롬프트를 순차적으로 자동 실행합니다",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "permissions": ["activeTab", "scripting", "downloads", "tabs", "storage"],
   "host_permissions": [
     "https://chatgpt.com/*",

@@ -42,11 +42,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       lastRunComplete: false, successCount: 0, errorCount: 0
     };
     persistState();
+    chrome.storage.session.set({ stopRequested: false }).catch(() => {}); // v2.1: 정지 플래그 초기화
 
     const prompts = msg.prompts;
     const globalPrompt = msg.globalPrompt || '';
     const images = msg.images || [];
     const waitMode = msg.waitMode || 'instant';
+    const sizeRatio   = msg.sizeRatio   || null;   // v2.2: 비율 선택값
+    const stylePreset = msg.stylePreset || null;   // v2.2: 스타일 선택값
+    const fontPreset  = msg.fontPreset  || null;   // v2.2: 글꼴 선택값
 
     chrome.scripting.executeScript({
       target: { tabId },
@@ -55,12 +59,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       return chrome.scripting.executeScript({
         target: { tabId },
         world: 'ISOLATED',
-        func: (p, gp, imgs, wm) => {
+        func: (p, gp, imgs, wm, sr, sp, fp) => {
           if (typeof window.__gptAutoStart === 'function') {
-            window.__gptAutoStart(p, gp, imgs, wm);
+            window.__gptAutoStart(p, gp, imgs, wm, sr, sp, fp);
           }
         },
-        args: [prompts, globalPrompt, images, waitMode]
+        args: [prompts, globalPrompt, images, waitMode, sizeRatio, stylePreset, fontPreset]
       });
     }).then(() => {
       console.log('[GPT-Auto BG] __gptAutoStart 호출 성공');
@@ -83,13 +87,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     state.running = false;
     state.status = '중지됨';
     persistState();
+    // v2.1: session에 stopRequested 플래그 저장 — SW 재시작 후에도 content.js가 인식
+    chrome.storage.session.set({ stopRequested: true, running: false }).catch(() => {});
 
     if (targetTabId) {
-      chrome.scripting.executeScript({
-        target: { tabId: targetTabId },
-        world: 'ISOLATED',
-        func: () => { if (typeof window.__gptAutoStop === 'function') window.__gptAutoStop(); }
-      }).catch(() => {});
+      // sendMessage 시도 → 실패 시 executeScript 폴백
+      chrome.tabs.sendMessage(targetTabId, { type: 'STOP_GENERATION' })
+        .catch(() => {
+          chrome.scripting.executeScript({
+            target: { tabId: targetTabId },
+            world: 'ISOLATED',
+            func: () => { if (typeof window.__gptAutoStop === 'function') window.__gptAutoStop(); }
+          }).catch(() => {});
+        });
     }
   }
 
@@ -98,6 +108,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     state.total = msg.total;
     state.status = msg.status;
     state.running = true;
+    persistState(); // v2.2: SW 재시작 후 running 상태 복원을 위해 영속화
     broadcastToPopup(msg);
   }
 
@@ -109,6 +120,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     state.errorCount = msg.errorCount || 0;
     state.current = msg.total || state.total;
     persistState();
+    chrome.storage.session.set({ stopRequested: false }).catch(() => {}); // v2.1: 완료 후 플래그 클리어
     broadcastToPopup(msg);
   }
 
@@ -116,9 +128,43 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     broadcastToPopup(msg);
   }
 
+  // v2.2: 팝업 초기화 — lastRunComplete 클리어 + 상태 완전 리셋
+  if (msg.type === 'RESET_STATE') {
+    state.running = false;
+    state.lastRunComplete = false;
+    state.successCount = 0;
+    state.errorCount = 0;
+    state.current = 0;
+    state.total = 0;
+    state.status = '대기중';
+    persistState();
+    chrome.storage.session.set({ stopRequested: false }).catch(() => {});
+  }
+
   if (msg.type === 'GET_STATUS') {
-    sendResponse(state);
-    return false;
+    // SW 재시작 시 인메모리 state가 초기화되므로 storage에서 직접 읽어 병합
+    // (PROGRESS_UPDATE → persistState()로 저장된 running 상태를 복원)
+    chrome.storage.session.get(['gptAutoState'], (result) => {
+      const saved = result?.gptAutoState;
+      if (saved && !state.running && saved.running) {
+        // SW가 재시작돼서 메모리 state는 false지만 storage엔 running=true가 남아 있는 경우
+        state.running      = true;
+        state.current      = saved.current  || 0;
+        state.total        = saved.total    || 0;
+        state.status       = saved.status   || '생성 중...';
+        state.tabId        = saved.tabId    || null;
+        state.lastRunComplete = false; // running 중이면 complete는 아님
+      } else if (saved && !state.running) {
+        // running=false인 경우에도 lastRunComplete 등 나머지 필드 복원
+        state.lastRunComplete = saved.lastRunComplete || false;
+        state.successCount    = saved.successCount    || 0;
+        state.errorCount      = saved.errorCount      || 0;
+        state.total           = saved.total           || 0;
+        state.current         = saved.current         || 0;
+      }
+      sendResponse(state);
+    });
+    return true; // async sendResponse를 위해 반드시 true 반환
   }
 
   if (msg.type === 'DOWNLOAD_IMAGES') {

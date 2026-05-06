@@ -47,6 +47,40 @@
   const INTER_PROMPT_DELAY_MS = 800;
   const IMG_STABLE_MS = 500; // img.complete 확인 후 추가 안정 버퍼
 
+  // v2.2: 최상위 명령 프리셋 맵 — null → '' (주입 없음)
+  const SIZE_RATIO_MAP = {
+    landscape: '이미지 비율: 16:9 가로형으로 생성하세요.',
+    square:    '이미지 비율: 1:1 정방형으로 생성하세요.',
+    portrait:  '이미지 비율: 9:16 세로형으로 생성하세요.',
+    cardnews:  '이미지 비율: 4:5 카드뉴스형으로 생성하세요.',
+  };
+
+  const STYLE_PRESET_MAP = {
+    minimal:     '미니멀 스타일로 생성하세요. 여백이 많고 깔끔하게.',
+    modern:      '현대적이고 세련된 모던 스타일로 생성하세요.',
+    flat:        '그림자 없는 플랫 디자인 스타일로 생성하세요.',
+    illust:      '손으로 그린 일러스트 스타일로 생성하세요.',
+    retro:       '1980~90년대 레트로/복고 스타일로 생성하세요.',
+    popart:      '굵은 선과 원색의 팝아트 스타일로 생성하세요.',
+    isometric:   '3D 이소메트릭 뷰 스타일로 생성하세요.',
+    infographic: '데이터 시각화 인포그래픽 스타일로 생성하세요.',
+    duotone:     '두 가지 색상만 사용하는 듀오톤 스타일로 생성하세요.',
+    lineart:     '깔끔한 라인아트 드로잉 스타일로 생성하세요.',
+  };
+
+  const FONT_PRESET_MAP = {
+    gothic:      '텍스트는 고딕 계열 산세리프 폰트 느낌으로 표현하세요.',
+    myeongjo:    '텍스트는 명조 계열 세리프 폰트 느낌으로 표현하세요.',
+    handwriting: '텍스트는 자연스러운 손글씨 폰트 느낌으로 표현하세요.',
+    retrogothic: '텍스트는 1980년대 레트로 고딕 폰트 느낌으로 표현하세요.',
+    calligraphy: '텍스트는 우아한 캘리그라피 필기체로 표현하세요.',
+    neon:        '텍스트는 빛나는 네온 사인 스타일 폰트로 표현하세요.',
+    stencil:     '텍스트는 스텐실 스프레이 페인트 폰트 느낌으로 표현하세요.',
+    display:     '텍스트는 임팩트 있는 디스플레이/장식 폰트로 표현하세요.',
+    block:       '텍스트는 두껍고 강한 블록 폰트 느낌으로 표현하세요.',
+    brush:       '텍스트는 동양적인 붓글씨 서예 스타일로 표현하세요.',
+  };
+
   let queue = [];
   let attachedImagesList = []; // 프롬프트별 첨부 이미지 (base64 or null)
   let currentIndex = 0;
@@ -55,12 +89,16 @@
   let successCount = 0;
   let errorCount = 0;
   let globalPromptText = ''; // 전역 스타일 지침 (팝업에서 전달)
+  let sizeRatio    = null; // v2.2: 선택된 비율 키 ('landscape'|'square'|'portrait'|'cardnews'|null)
+  let stylePreset  = null; // v2.2: 선택된 스타일 키 (STYLE_PRESET_MAP 키 | null)
+  let fontPreset   = null; // v2.2: 선택된 글꼴 키 (FONT_PRESET_MAP 키 | null)
   let imgCountSnapshot = 0;
   let imgCountMax = 0; // DOM virtualization 대비: 세션 중 관측된 최대값
   let imgDetectedAt = 0;
   let noImgTurnAt = 0;
   let executionStartSnapshot = 0; // 이번 실행 시작 시점의 img 개수
   let runImageUrls = []; // 이번 실행 중 수집된 이미지 URL (실시간 누적 — DOM 가상화 무관)
+  let retryCount = 0;   // v2.1: 카드당 재시도 횟수 (0 or 1) — processNext 재귀 시 보존
 
   // net-hook.js(MAIN world)에서 전달되는 네트워크 신호
   // COMPLETE는 "스트림 종료" 플래그만 세움 — DOM 폴링이 이미지 완료를 판단
@@ -246,17 +284,20 @@
     return urls;
   };
 
-  window.__gptAutoStart = (prompts, globalPrompt, images, waitMode) => {
+  window.__gptAutoStart = (prompts, globalPrompt, images, waitMode, ratioKey, styleKey, fontKey) => {
     // 모드별 타임아웃 적용 (기본값: instant)
     const modeCfg = MODE_TIMEOUTS[waitMode] || MODE_TIMEOUTS.instant;
     timeoutMs      = modeCfg.timeoutMs;
     noImgWaitMs    = modeCfg.noImgWaitMs;
     noImgNetWaitMs = modeCfg.noImgNetWaitMs;
-    console.log(`[GPT-Auto] __gptAutoStart 호출됨 ✅ 모드:${waitMode || 'instant'} timeout=${timeoutMs/1000}s noImgWait=${noImgWaitMs/1000}s 프롬프트:${prompts?.length}개`);
+    console.log(`[GPT-Auto] __gptAutoStart 호출됨 ✅ 모드:${waitMode || 'instant'} ratio:${ratioKey || 'none'} style:${styleKey || 'none'} font:${fontKey || 'none'} 프롬프트:${prompts?.length}개`);
 
     queue = prompts;
     globalPromptText = globalPrompt || '';
     attachedImagesList = images || [];
+    sizeRatio   = ratioKey  || null; // v2.2: 비율 선택값 저장
+    stylePreset = styleKey  || null; // v2.2: 스타일 선택값 저장
+    fontPreset  = fontKey   || null; // v2.2: 글꼴 선택값 저장
     currentIndex = 0;
     running = true;
     aborted = false;
@@ -272,6 +313,9 @@
   window.__gptAutoStop = () => {
     aborted = true;
     running = false;
+    // v2.1: ChatGPT 정지 버튼 자동 클릭 (생성 중이면 즉시 중단)
+    const stopBtn = findStopButton();
+    if (stopBtn) stopBtn.click();
     updatePanel(currentIndex, queue.length, '중지됨');
   };
 
@@ -294,7 +338,23 @@
     }
   });
 
+  // v2.2: 최상위 명령 프리픽스 합성
+  // 합성 순서: [스타일]\n[글꼴]\n[비율] → \n\n → [전역 지침] → \n\n → [개별 프롬프트]
+  function buildSystemPrefix() {
+    const parts = [];
+    if (stylePreset && STYLE_PRESET_MAP[stylePreset]) parts.push(STYLE_PRESET_MAP[stylePreset]);
+    if (fontPreset  && FONT_PRESET_MAP[fontPreset])   parts.push(FONT_PRESET_MAP[fontPreset]);
+    if (sizeRatio   && SIZE_RATIO_MAP[sizeRatio])     parts.push(SIZE_RATIO_MAP[sizeRatio]);
+    return parts.join('\n');
+  }
+
   async function processNext() {
+    // v2.1: SW 재시작 후 stopRequested 플래그 확인 (안전망)
+    try {
+      const s = await chrome.storage.session.get('stopRequested');
+      if (s.stopRequested) { aborted = true; }
+    } catch (e) {}
+
     if (aborted || currentIndex >= queue.length) {
       running = false;
       updatePanel(queue.length, queue.length, '완료');
@@ -308,10 +368,11 @@
     }
 
     const individualPrompt = queue[currentIndex];
-    // 전역 지침이 있으면 앞에 붙여 합성 — 없으면 기존과 동일
-    const prompt = globalPromptText
-      ? globalPromptText + '\n\n' + individualPrompt
-      : individualPrompt;
+    // v2.2: 최상위 명령(비율) → 전역 지침 → 개별 프롬프트 순서로 합성
+    const systemPrefix = buildSystemPrefix();
+    const prompt = [systemPrefix, globalPromptText, individualPrompt]
+      .filter(Boolean)
+      .join('\n\n');
 
     sendProgress('프롬프트 입력 중...');
 
@@ -328,6 +389,8 @@
         await attachImageToChat(attachImages);
       }
 
+      // v2.2: 첨부 완료 후 / 타이핑 직전 aborted 체크 (첨부 대기 중 stop 버튼 대비)
+      if (aborted) return processNext();
       await typePrompt(prompt);
       await sleep(500);
 
@@ -347,8 +410,14 @@
         successCount++;
         captureNewRunImages(prevUrlSet); // 완료 직후 즉시 수집 — 아직 DOM에 있을 때
         sendProgress('완료');
+      } else if ((lastResult === 'text' || lastResult === 'timeout') && retryCount < 1) {
+        // v2.1: 이미지 실패 시 1회 자동 재시도 (같은 카드, currentIndex 유지)
+        retryCount++;
+        sendProgress(`재시도 중... (${retryCount}/1)`);
+        await sleep(RETRY_DELAY_MS);
+        return processNext(); // 재귀 재진입 — retryCount는 전역이므로 보존됨
       } else if (lastResult === 'text') {
-        // 90s/120s 경과 후 이미지 미감지 → 사용자에게 계속 여부 확인
+        // 재시도 후에도 이미지 미감지 → 사용자에게 계속 여부 확인
         sendProgress('이미지 미감지 — 대기 중...');
         const decision = await waitForUserDecision(currentIndex, queue.length);
         if (decision === 'stop') {
@@ -365,6 +434,9 @@
         }
         // 'continue': successCount 증가 없이 다음으로 이동
         sendProgress('건너뜀');
+      } else if (lastResult === 'aborted') {
+        // v2.2: 정지 요청으로 인한 종료 — 에러 카운트 증가 없음
+        // processNext() 최상단의 aborted 체크가 루프를 즉시 종료시킴
       } else if (lastResult === 'error') {
         errorCount++;
         sendProgress('오류');
@@ -386,6 +458,7 @@
       });
     }
 
+    retryCount = 0; // v2.1: 다음 카드 이동 전 반드시 리셋
     currentIndex++;
     if (!aborted) {
       if (lastResult === 'error') {
@@ -546,7 +619,8 @@
       netSignalResolve = done;
 
       const check = () => {
-        if (resolved || aborted) return;
+        if (resolved) return;
+        if (aborted) { done('aborted'); return; } // v2.2: 즉시 종료 (500ms 폴 대기 제거)
         const result = checkCompletion(turnCountBefore);
         if (result) done(result);
       };
